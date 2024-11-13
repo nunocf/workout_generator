@@ -8,9 +8,10 @@ import Web.View.Exercises.Show
 
 instance Controller ExercisesController where
   action ExercisesAction = do
-{- ORMOLU_DISABLE -}
-    exercises <- query @Exercise |> fetch >>= collectionFetchRelated #muscleGroup
-{- ORMOLU_ENABLE -}
+    exercises <-
+      query @Exercise
+        |> fetch
+        >>= collectionFetchRelated #muscleGroup
     render IndexView {..}
   action NewExerciseAction = do
     let exercise = newRecord

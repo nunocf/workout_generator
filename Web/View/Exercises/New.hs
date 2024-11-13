@@ -9,10 +9,8 @@ data NewView = NewView
 
 instance CanSelect MuscleGroup where
   type SelectValue MuscleGroup = Id MuscleGroup
-{- ORMOLU_DISABLE -}
   selectValue muscleGroup = muscleGroup.id
   selectLabel muscleGroup = muscleGroup.name
-{- ORMOLU_ENABLE -}
 
 instance View NewView where
   html NewView {..} =
@@ -38,4 +36,3 @@ renderForm exercise muscleGroups =
     {submitButton}
 
 |]
-

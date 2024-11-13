@@ -9,11 +9,10 @@ import Web.View.MuscleGroups.Show
 instance Controller MuscleGroupsController where
   action MuscleGroupsAction =
     do
-      muscleGroups <- query @MuscleGroup
-{- ORMOLU_DISABLE -}
-        |> orderByDesc #createdAt 
-{- ORMOLU_ENABLE -}
-        |> fetch
+      muscleGroups <-
+        query @MuscleGroup
+          |> orderByDesc #createdAt
+          |> fetch
       render IndexView {..}
   action NewMuscleGroupAction = do
     let muscleGroup = newRecord
@@ -53,6 +52,4 @@ instance Controller MuscleGroupsController where
 buildMuscleGroup muscleGroup =
   muscleGroup
     |> fill @'["name"]
-{- ORMOLU_DISABLE -}
     |> validateField #name nonEmpty
-{- ORMOLU_ENABLE -}
