@@ -51,7 +51,7 @@ renderForm exercise muscleGroups =
       let checkboxId = "checkbox-muscleGroup-" <> show index
        in [hsx|
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id={checkboxId} value={muscleGroup.id}>
+            <input class="form-check-input" type="checkbox" id={checkboxId} name="muscleGroupIds" value={muscleGroup.id}>
             <label class="form-check-label" for={checkboxId}>{muscleGroup.name}</label>
           </div>
       |]
