@@ -40,7 +40,7 @@ instance View IndexView where
         [hsx|
           <tr>
               <td><a href={ShowExerciseAction exercise.id}>{exercise.name}</a></td>
-              <td>{forEach (thisMuscleGroups exercise) renderGroup}</td>
+              <td>{forEach (thisMuscleGroups exercise) renderMuscleGroup}</td>
               <td><a href={EditExerciseAction exercise.id} class="text-muted">Edit</a></td>
               <td><a href={DeleteExerciseAction exercise.id} class="js-delete text-muted">Delete</a></td>
           </tr>
@@ -52,7 +52,7 @@ instance View IndexView where
           |> filter (\emg -> emg.exerciseId == exercise.id)
           |> mapMaybe (\emg -> find (\muscleGroup -> muscleGroup.id == emg.muscleGroupId) muscleGroups)
 
-      renderGroup exerciseGroup =
+      renderMuscleGroup muscleGroup =
         [hsx|
-          <a href={ShowMuscleGroupAction exerciseGroup.id}>{exerciseGroup.name}</a>
+          <a href={ShowMuscleGroupAction muscleGroup.id}>{muscleGroup.name}</a>
         |]
