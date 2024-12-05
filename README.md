@@ -69,3 +69,16 @@ Feel free to customize the workflow file to fit your specific project needs. You
 For issues related to IHP or this project's setup, please refer to the [IHP documentation](https://ihp.digitallyinduced.com/Guide/) or seek help on the [IHP Forum](https://ihp.digitallyinduced.com/community/).
 
 For project-specific issues, please open an issue in this repository.
+
+## TODO
+
+- [ ] Add migration to change relationship between exercises and muscle groups to be n:n
+- [ ] Generate a workout based on muscle groups.
+- [ ] Generate training based on duration.
+- [ ] Generate training by objective.
+  - [ ] Mobility/Flexibility/Strength/Endurance.
+- [ ] Generate training by location (home, gym, outdoor, etc).
+- [ ] Generate training by level (beginner, advanced, intermediate, etc).
+- [ ] Add coach view and role.
+- [ ] When generate a workout you can associate it to a coach and a trainee.
+- [ ] Workout template.
