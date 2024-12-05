@@ -43,13 +43,17 @@ instance Controller ExercisesController where
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
     muscleGroups <- query @MuscleGroup |> fetch
-    let exercise = newRecord @Exercise
-    exercise
+    let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
+    newRecord @Exercise
+      |> buildExercise
       |> ifValid \case
         Left exercise -> render NewView {..}
         Right exercise -> do
-          exercise <- exercise |> createRecord
-          setSuccessMessage "Exercise created"
+          withTransaction do
+            exercise <- createRecord exercise
+            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
+            setSuccessMessage "Exercise created"
+
           redirectTo ExercisesAction
   action DeleteExerciseAction {exerciseId} = do
     exercise <- fetch exerciseId
@@ -59,4 +63,16 @@ instance Controller ExercisesController where
 
 buildExercise exercise =
   exercise
-    |> fill @'["name", "muscleGroup"]
+    |> fill @'["name"]
+    |> validateField #name nonEmpty
+
+createExerciseMuscleGroups exercise muscleGroupIds = do
+  let exercisesMuscleGroupsToCreate =
+        map
+          ( \muscleGroupId ->
+              newRecord @ExercisesMuscleGroup
+                |> set #exerciseId (get #id exercise)
+                |> set #muscleGroupId muscleGroupId
+          )
+          muscleGroupIds
+  createMany exercisesMuscleGroupsToCreate
