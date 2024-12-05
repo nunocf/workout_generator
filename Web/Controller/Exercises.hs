@@ -7,18 +7,27 @@ import Web.View.Exercises.New
 import Web.View.Exercises.Show
 
 instance Controller ExercisesController where
-  action ExercisesAction = do
-    exercises <-
-      query @Exercise
-        |> fetch
-        >>= collectionFetchRelated #muscleGroup
-    render IndexView {..}
+  action ExercisesAction =
+    do
+      exercises <- query @Exercise |> fetch
+
+      exercisesMuscleGroups <-
+        query @ExercisesMuscleGroup
+          |> filterWhereIn (#exerciseId, ids exercises)
+          |> fetch
+
+      muscleGroups <-
+        query @MuscleGroup
+          |> filterWhereIn (#id, map (.muscleGroupId) exercisesMuscleGroups)
+          |> fetch
+
+      render IndexView {..}
   action NewExerciseAction = do
     let exercise = newRecord
     muscleGroups <- query @MuscleGroup |> fetch
     render NewView {..}
   action ShowExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId >>= fetchRelated #muscleGroup
+    exercise <- fetch exerciseId
     render ShowView {..}
   action EditExerciseAction {exerciseId} = do
     exercise <- fetch exerciseId
@@ -26,7 +35,6 @@ instance Controller ExercisesController where
   action UpdateExerciseAction {exerciseId} = do
     exercise <- fetch exerciseId
     exercise
-      |> buildExercise
       |> ifValid \case
         Left exercise -> render EditView {..}
         Right exercise -> do
@@ -37,7 +45,6 @@ instance Controller ExercisesController where
     muscleGroups <- query @MuscleGroup |> fetch
     let exercise = newRecord @Exercise
     exercise
-      |> buildExercise
       |> ifValid \case
         Left exercise -> render NewView {..}
         Right exercise -> do

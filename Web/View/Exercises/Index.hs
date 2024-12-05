@@ -2,7 +2,11 @@ module Web.View.Exercises.Index where
 
 import Web.View.Prelude
 
-data IndexView = IndexView {exercises :: [Include "muscleGroup" Exercise]}
+data IndexView = IndexView
+  { exercises :: [Exercise],
+    muscleGroups :: [MuscleGroup],
+    exercisesMuscleGroups :: [ExercisesMuscleGroup]
+  }
 
 instance View IndexView where
   html IndexView {..} =
@@ -15,7 +19,7 @@ instance View IndexView where
                 <thead>
                     <tr>
                         <th>Exercise</th>
-                        <th>Muscle Group</th>
+                        <th>Muscle Groups</th>
                         <th></th>
                         <th></th>
                     </tr>
@@ -31,15 +35,24 @@ instance View IndexView where
           [ breadcrumbLink "Exercises" ExercisesAction
           ]
 
-renderExercise :: Include "muscleGroup" Exercise -> Html
-renderExercise exercise =
-  [hsx|
-    <tr>
-        <td><a href={ShowExerciseAction exercise.id}>{exercise.name}</a></td>
-        <td>{exercise.muscleGroup.name}</td>
-        <td><a href={EditExerciseAction exercise.id} class="text-muted">Edit</a></td>
-        <td><a href={DeleteExerciseAction exercise.id} class="js-delete text-muted">Delete</a></td>
-    </tr>
-|]
-  where
+      renderExercise :: Exercise -> Html
+      renderExercise exercise =
+        [hsx|
+          <tr>
+              <td><a href={ShowExerciseAction exercise.id}>{exercise.name}</a></td>
+              <td>{forEach (thisMuscleGroups exercise) renderGroup}</td>
+              <td><a href={EditExerciseAction exercise.id} class="text-muted">Edit</a></td>
+              <td><a href={DeleteExerciseAction exercise.id} class="js-delete text-muted">Delete</a></td>
+          </tr>
+        |]
 
+      thisMuscleGroups :: Exercise -> [MuscleGroup]
+      thisMuscleGroups exercise =
+        exercisesMuscleGroups
+          |> filter (\emg -> emg.exerciseId == exercise.id)
+          |> mapMaybe (\emg -> find (\muscleGroup -> muscleGroup.id == emg.muscleGroupId) muscleGroups)
+
+      renderGroup exerciseGroup =
+        [hsx|
+          <a href={ShowMuscleGroupAction exerciseGroup.id}>{exerciseGroup.name}</a>
+        |]
