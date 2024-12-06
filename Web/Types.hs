@@ -27,3 +27,10 @@ data ExercisesController
   | UpdateExerciseAction {exerciseId :: !(Id Exercise)}
   | DeleteExerciseAction {exerciseId :: !(Id Exercise)}
   deriving (Eq, Show, Data)
+
+data ExerciseWithMuscleGroups
+  = ExerciseWithMuscleGroups
+  { exercise :: !Exercise,
+    muscleGroups :: ![MuscleGroup]
+  }
+  deriving (Show)
