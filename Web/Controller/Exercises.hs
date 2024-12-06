@@ -1,5 +1,6 @@
 module Web.Controller.Exercises where
 
+import Application.Helper.Controller qualified as ControllerHelper
 import Web.Controller.Prelude
 import Web.View.Exercises.Edit
 import Web.View.Exercises.Index
@@ -9,17 +10,7 @@ import Web.View.Exercises.Show
 instance Controller ExercisesController where
   action ExercisesAction =
     do
-      exercises <- query @Exercise |> fetch
-
-      exercisesMuscleGroups <-
-        query @ExercisesMuscleGroup
-          |> filterWhereIn (#exerciseId, ids exercises)
-          |> fetch
-
-      muscleGroups <-
-        query @MuscleGroup
-          |> filterWhereIn (#id, map (.muscleGroupId) exercisesMuscleGroups)
-          |> fetch
+      exercisesWithMuscleGroups <- ControllerHelper.fetchAllExercisesWithMuscleGroups
 
       render IndexView {..}
   action NewExerciseAction = do
