@@ -3,9 +3,7 @@ module Web.View.Exercises.Index where
 import Web.View.Prelude
 
 data IndexView = IndexView
-  { exercises :: [Exercise],
-    muscleGroups :: [MuscleGroup],
-    exercisesMuscleGroups :: [ExercisesMuscleGroup]
+  { exercisesWithMuscleGroups :: [ExerciseWithMuscleGroups]
   }
 
 instance View IndexView where
@@ -24,7 +22,7 @@ instance View IndexView where
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>{forEach exercises renderExercise}</tbody>
+                <tbody>{forEach exercisesWithMuscleGroups renderExercise}</tbody>
             </table>
             
         </div>
@@ -35,22 +33,16 @@ instance View IndexView where
           [ breadcrumbLink "Exercises" ExercisesAction
           ]
 
-      renderExercise :: Exercise -> Html
-      renderExercise exercise =
+      renderExercise :: ExerciseWithMuscleGroups -> Html
+      renderExercise (ExerciseWithMuscleGroups {exercise, muscleGroups}) =
         [hsx|
           <tr>
               <td><a href={ShowExerciseAction exercise.id}>{exercise.name}</a></td>
-              <td>{forEach (thisMuscleGroups exercise) renderMuscleGroup}</td>
+              <td>{forEach muscleGroups renderMuscleGroup}</td>
               <td><a href={EditExerciseAction exercise.id} class="text-muted">Edit</a></td>
               <td><a href={DeleteExerciseAction exercise.id} class="js-delete text-muted">Delete</a></td>
           </tr>
         |]
-
-      thisMuscleGroups :: Exercise -> [MuscleGroup]
-      thisMuscleGroups exercise =
-        exercisesMuscleGroups
-          |> filter (\emg -> emg.exerciseId == exercise.id)
-          |> mapMaybe (\emg -> find (\muscleGroup -> muscleGroup.id == emg.muscleGroupId) muscleGroups)
 
       renderMuscleGroup muscleGroup =
         [hsx|
