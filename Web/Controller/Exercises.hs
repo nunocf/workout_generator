@@ -33,12 +33,22 @@ instance Controller ExercisesController where
   action UpdateExerciseAction {exerciseId} = do
     exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
     allMuscleGroups <- query @MuscleGroup |> fetch
+    let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
     exerciseWithMuscleGroups.exercise
       |> ifValid \case
         Left exercise -> render EditView {..}
         Right exercise -> do
-          exercise <- exercise |> updateRecord
-          setSuccessMessage "Exercise updated"
+          withTransaction do
+            exercise <- exercise |> updateRecord
+            exercisesMuscleGroups <-
+              query @ExercisesMuscleGroup
+                |> filterWhere (#exerciseId, exercise.id)
+                |> fetch
+
+            deleteRecords exercisesMuscleGroups
+
+            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
+            setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
     allMuscleGroups <- query @MuscleGroup |> fetch
@@ -71,12 +81,13 @@ buildExercise exercise =
     |> validateField #name nonEmpty
 
 createExerciseMuscleGroups exercise muscleGroupIds = do
-  let exercisesMuscleGroupsToCreate =
-        map
-          ( \muscleGroupId ->
-              newRecord @ExercisesMuscleGroup
-                |> set #exerciseId (get #id exercise)
-                |> set #muscleGroupId muscleGroupId
-          )
-          muscleGroupIds
   createMany exercisesMuscleGroupsToCreate
+  where
+    exercisesMuscleGroupsToCreate =
+      map
+        ( \muscleGroupId ->
+            newRecord @ExercisesMuscleGroup
+              |> set #exerciseId (get #id exercise)
+              |> set #muscleGroupId muscleGroupId
+        )
+        muscleGroupIds
