@@ -24,7 +24,7 @@ instance Controller ExercisesController where
 
     render NewView {..}
   action ShowExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId
+    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
     render ShowView {..}
   action EditExerciseAction {exerciseId} = do
     exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
