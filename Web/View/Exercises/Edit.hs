@@ -1,15 +1,19 @@
 module Web.View.Exercises.Edit where
 
+import Application.Helper.View qualified as ViewHelper
 import Web.View.Prelude
 
-data EditView = EditView {exercise :: Exercise}
+data EditView = EditView
+  { exerciseWithMuscleGroups :: ExerciseWithMuscleGroups,
+    allMuscleGroups :: [MuscleGroup]
+  }
 
 instance View EditView where
   html EditView {..} =
     [hsx|
         {breadcrumb}
         <h1>Edit Exercise</h1>
-        {renderForm exercise}
+        {ViewHelper.renderExerciseWithMuscleGroupsForm allMuscleGroups exerciseWithMuscleGroups}
     |]
     where
       breadcrumb =
@@ -17,15 +21,3 @@ instance View EditView where
           [ breadcrumbLink "Exercises" ExercisesAction,
             breadcrumbText "Edit Exercise"
           ]
-
-renderForm :: Exercise -> Html
-renderForm exercise =
-  formFor
-    exercise
-    [hsx|
-    {(textField #name)}
-    {(textField #muscleGroup)}
-    {submitButton}
-
-|]
-

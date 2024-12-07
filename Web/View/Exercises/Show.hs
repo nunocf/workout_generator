@@ -2,14 +2,14 @@ module Web.View.Exercises.Show where
 
 import Web.View.Prelude
 
-data ShowView = ShowView {exercise :: Include "muscleGroup" Exercise}
+data ShowView = ShowView {exerciseWithMuscleGroups :: ExerciseWithMuscleGroups}
 
 instance View ShowView where
   html ShowView {..} =
     [hsx|
         {breadcrumb}
-        <h1>{exercise.name}</h1>
-        <p>{exercise.muscleGroup.name}</p>
+        <h1>{exerciseWithMuscleGroups.exercise.name}</h1>
+        <p>{forEach exerciseWithMuscleGroups.muscleGroups renderMuscleGroup}</p>
 
     |]
     where
@@ -18,3 +18,5 @@ instance View ShowView where
           [ breadcrumbLink "Exercises" ExercisesAction,
             breadcrumbText "Show Exercise"
           ]
+      renderMuscleGroup muscleGroup =
+        [hsx|<li>{muscleGroup.name}</li>|]
