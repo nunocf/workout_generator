@@ -21,11 +21,13 @@ instance Controller ExercisesController where
     exercise <- fetch exerciseId
     render ShowView {..}
   action EditExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId
+    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
+    allMuscleGroups <- query @MuscleGroup |> fetch
     render EditView {..}
   action UpdateExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId
-    exercise
+    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
+    allMuscleGroups <- query @MuscleGroup |> fetch
+    exerciseWithMuscleGroups.exercise
       |> ifValid \case
         Left exercise -> render EditView {..}
         Right exercise -> do
