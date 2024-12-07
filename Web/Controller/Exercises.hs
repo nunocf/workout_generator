@@ -14,8 +14,14 @@ instance Controller ExercisesController where
 
       render IndexView {..}
   action NewExerciseAction = do
-    let exercise = newRecord
-    muscleGroups <- query @MuscleGroup |> fetch
+    let exerciseWithMuscleGroups =
+          ExerciseWithMuscleGroups
+            { exercise = newRecord,
+              muscleGroups = []
+            }
+
+    allMuscleGroups <- query @MuscleGroup |> fetch
+
     render NewView {..}
   action ShowExerciseAction {exerciseId} = do
     exercise <- fetch exerciseId
@@ -35,12 +41,17 @@ instance Controller ExercisesController where
           setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
-    muscleGroups <- query @MuscleGroup |> fetch
+    allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
-        Left exercise -> render NewView {..}
+        Left exercise ->
+          render
+            NewView
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups {exercise, muscleGroups = []},
+                allMuscleGroups
+              }
         Right exercise -> do
           withTransaction do
             exercise <- createRecord exercise
