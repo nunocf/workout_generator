@@ -1,23 +1,19 @@
 module Web.View.Exercises.New where
 
+import Application.Helper.View qualified as ViewHelper
 import Web.View.Prelude
 
 data NewView = NewView
-  { exercise :: Exercise,
-    muscleGroups :: [MuscleGroup]
+  { exerciseWithMuscleGroups :: ExerciseWithMuscleGroups,
+    allMuscleGroups :: [MuscleGroup]
   }
-
-instance CanSelect MuscleGroup where
-  type SelectValue MuscleGroup = Id MuscleGroup
-  selectValue muscleGroup = muscleGroup.id
-  selectLabel muscleGroup = muscleGroup.name
 
 instance View NewView where
   html NewView {..} =
     [hsx|
         {breadcrumb}
         <h1>New Exercise</h1>
-        {renderForm exercise muscleGroups}
+        {ViewHelper.renderExerciseWithMuscleGroupsForm allMuscleGroups exerciseWithMuscleGroups}
     |]
     where
       breadcrumb =
@@ -25,14 +21,3 @@ instance View NewView where
           [ breadcrumbLink "Exercises" ExercisesAction,
             breadcrumbText "New Exercise"
           ]
-
-renderForm :: Exercise -> [MuscleGroup] -> Html
-renderForm exercise muscleGroups =
-  formFor
-    exercise
-    [hsx|
-    {(textField #name)}
-    {(selectField #muscleGroup muscleGroups)}
-    {submitButton}
-
-|]
