@@ -47,25 +47,29 @@ instance Controller ExercisesController where
 
             deleteRecords exercisesMuscleGroups
 
-            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
             setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
     allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
+    muscleGroups <-
+      query @MuscleGroup
+        |> filterWhereIn (#id, paramMuscleGroupIds)
+        |> fetch
+
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
         Left exercise ->
           render
             NewView
-              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups {exercise, muscleGroups = []},
+              { exerciseWithMuscleGroups =
+                  ExerciseWithMuscleGroups {exercise = exercise, muscleGroups = muscleGroups},
                 allMuscleGroups
               }
-        Right exercise -> do
+        Right exerciseWithMuscleGroups -> do
           withTransaction do
-            exercise <- createRecord exercise
-            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
+            exercise <- createRecord exerciseWithMuscleGroups
             setSuccessMessage "Exercise created"
 
           redirectTo ExercisesAction
@@ -78,16 +82,4 @@ instance Controller ExercisesController where
 buildExercise exercise =
   exercise
     |> fill @'["name"]
-    |> validateField #name nonEmpty
-
-createExerciseMuscleGroups exercise muscleGroupIds = do
-  createMany exercisesMuscleGroupsToCreate
-  where
-    exercisesMuscleGroupsToCreate =
-      map
-        ( \muscleGroupId ->
-            newRecord @ExercisesMuscleGroup
-              |> set #exerciseId (get #id exercise)
-              |> set #muscleGroupId muscleGroupId
-        )
-        muscleGroupIds
+    |> validateField (#name) nonEmpty
