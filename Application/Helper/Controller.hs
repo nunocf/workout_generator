@@ -10,6 +10,9 @@ import IHP.ModelSupport
 import IHP.QueryBuilder
 import Web.Types
 
+instance Record ExerciseWithMuscleGroups where
+  newRecord = ExerciseWithMuscleGroups {exercise = newRecord, muscleGroups = []}
+
 instance CanCreate ExerciseWithMuscleGroups where
   create :: (?modelContext :: ModelContext) => ExerciseWithMuscleGroups -> IO ExerciseWithMuscleGroups
   create (ExerciseWithMuscleGroups {exercise, muscleGroups}) = do

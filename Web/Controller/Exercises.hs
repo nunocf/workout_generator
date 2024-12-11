@@ -14,12 +14,7 @@ instance Controller ExercisesController where
 
       render IndexView {..}
   action NewExerciseAction = do
-    let exerciseWithMuscleGroups =
-          ExerciseWithMuscleGroups
-            { exercise = newRecord,
-              muscleGroups = []
-            }
-
+    let exerciseWithMuscleGroups = newRecord @ExerciseWithMuscleGroups
     allMuscleGroups <- query @MuscleGroup |> fetch
 
     render NewView {..}
@@ -69,7 +64,13 @@ instance Controller ExercisesController where
               }
         Right exerciseWithMuscleGroups -> do
           withTransaction do
-            exercise <- createRecord exerciseWithMuscleGroups
+            exerciseWithMuscleGroups <-
+              create
+                ( newRecord @ExerciseWithMuscleGroups
+                    |> set #exercise exerciseWithMuscleGroups.exercise
+                    |> set #muscleGroups muscleGroups
+                )
+            -- createRecord exerciseWithMuscleGroups
             setSuccessMessage "Exercise created"
 
           redirectTo ExercisesAction
