@@ -32,16 +32,16 @@ instance Controller ExercisesController where
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
     exerciseWithMuscleGroups.exercise
       |> ifValid \case
-        Left exercise -> render EditView {..}
+        Left exercise ->
+          render EditView {..}
         Right exercise -> do
           withTransaction do
             exercise <- updateRecord exercise
-            exercisesMuscleGroups <-
-              query @ExercisesMuscleGroup
-                |> filterWhere (#exerciseId, exercise.id)
-                |> fetch
-
-            deleteRecords exercisesMuscleGroups
+            query @ExercisesMuscleGroup
+              |> filterWhere (#exerciseId, exercise.id)
+              |> fetch
+              >>= deleteRecords
+            createExercisesMuscleGroupsAssocs exercise.id (paramList "muscleGroupIds")
 
             setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
