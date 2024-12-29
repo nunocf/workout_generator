@@ -55,24 +55,16 @@ instance Controller ExercisesController where
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
-        Left exercise ->
+        Left invalidExercise ->
           render
             NewView
-              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups exercise muscleGroups,
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups invalidExercise muscleGroups,
                 allMuscleGroups = allMuscleGroups
               }
-        Right builtExercise -> do
+        Right validExercise -> do
           withTransaction do
-            createdExercise <- createRecord builtExercise
-            let muscleGroupIds :: [Id MuscleGroup] = paramList "muscleGroupId"
-            mapM_
-              ( \muscleGroupId ->
-                  newRecord @ExercisesMuscleGroup
-                    |> set #exerciseId createdExercise.id
-                    |> set #muscleGroupId muscleGroupId
-                    |> createRecord
-              )
-              muscleGroupIds
+            createdExercise <- createRecord validExercise
+            createExercisesMuscleGroupsAssocs createdExercise.id (paramList "muscleGroupIds")
 
             setSuccessMessage "Create exercise and muscle group associations"
     redirectTo ExercisesAction
