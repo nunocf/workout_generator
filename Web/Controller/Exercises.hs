@@ -1,6 +1,7 @@
 module Web.Controller.Exercises where
 
 import Application.Helper.Controller qualified as ControllerHelper
+import Data.List qualified
 import Web.Controller.Prelude
 import Web.View.Exercises.Edit
 import Web.View.Exercises.Index
@@ -34,7 +35,7 @@ instance Controller ExercisesController where
         Left exercise -> render EditView {..}
         Right exercise -> do
           withTransaction do
-            exercise <- exercise |> updateRecord
+            exercise <- updateRecord exercise
             exercisesMuscleGroups <-
               query @ExercisesMuscleGroup
                 |> filterWhere (#exerciseId, exercise.id)
@@ -47,20 +48,18 @@ instance Controller ExercisesController where
   action CreateExerciseAction = do
     allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
-    muscleGroups <-
-      query @MuscleGroup
-        |> filterWhereIn (#id, paramMuscleGroupIds)
-        |> fetch
-
+    let muscleGroups =
+          Data.List.filter
+            (\muscleGroup -> muscleGroup.id `elem` paramMuscleGroupIds)
+            allMuscleGroups
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
         Left exercise ->
           render
             NewView
-              { exerciseWithMuscleGroups =
-                  ExerciseWithMuscleGroups {exercise = exercise, muscleGroups = muscleGroups},
-                allMuscleGroups
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups exercise muscleGroups,
+                allMuscleGroups = allMuscleGroups
               }
         Right exerciseWithMuscleGroups -> do
           withTransaction do
