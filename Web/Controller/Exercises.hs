@@ -61,18 +61,21 @@ instance Controller ExercisesController where
               { exerciseWithMuscleGroups = ExerciseWithMuscleGroups exercise muscleGroups,
                 allMuscleGroups = allMuscleGroups
               }
-        Right exerciseWithMuscleGroups -> do
+        Right builtExercise -> do
           withTransaction do
-            exerciseWithMuscleGroups <-
-              create
-                ( newRecord @ExerciseWithMuscleGroups
-                    |> set #exercise exerciseWithMuscleGroups.exercise
-                    |> set #muscleGroups muscleGroups
-                )
-            -- createRecord exerciseWithMuscleGroups
-            setSuccessMessage "Exercise created"
+            createdExercise <- createRecord builtExercise
+            let muscleGroupIds :: [Id MuscleGroup] = paramList "muscleGroupId"
+            mapM_
+              ( \muscleGroupId ->
+                  newRecord @ExercisesMuscleGroup
+                    |> set #exerciseId createdExercise.id
+                    |> set #muscleGroupId muscleGroupId
+                    |> createRecord
+              )
+              muscleGroupIds
 
-          redirectTo ExercisesAction
+            setSuccessMessage "Create exercise and muscle group associations"
+    redirectTo ExercisesAction
   action DeleteExerciseAction {exerciseId} = do
     exercise <- fetch exerciseId
     deleteRecord exercise
