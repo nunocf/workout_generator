@@ -77,8 +77,12 @@ instance Controller ExercisesController where
             setSuccessMessage "Create exercise and muscle group associations"
     redirectTo ExercisesAction
   action DeleteExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId
-    deleteRecord exercise
+    withTransaction do
+      deleteRecordById exerciseId
+      query @ExercisesMuscleGroup
+        |> findManyBy #exerciseId exerciseId
+        >>= deleteRecords
+
     setSuccessMessage "Exercise deleted"
     redirectTo ExercisesAction
 
