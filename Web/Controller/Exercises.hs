@@ -90,3 +90,15 @@ buildExercise exercise =
   exercise
     |> fill @'["name"]
     |> validateField (#name) nonEmpty
+
+createExercisesMuscleGroupsAssocs ::
+  (?modelContext :: ModelContext) => Id Exercise -> [Id MuscleGroup] -> IO ()
+createExercisesMuscleGroupsAssocs exerciseId muscleGroupIds = do
+  mapM_
+    ( \muscleGroupId ->
+        newRecord @ExercisesMuscleGroup
+          |> set #exerciseId exerciseId
+          |> set #muscleGroupId muscleGroupId
+          |> createRecord
+    )
+    muscleGroupIds
