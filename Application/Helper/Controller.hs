@@ -13,54 +13,6 @@ import Web.Types
 instance Record ExerciseWithMuscleGroups where
   newRecord = ExerciseWithMuscleGroups {exercise = newRecord, muscleGroups = []}
 
-instance CanCreate ExerciseWithMuscleGroups where
-  create :: (?modelContext :: ModelContext) => ExerciseWithMuscleGroups -> IO ExerciseWithMuscleGroups
-  create (ExerciseWithMuscleGroups {exercise, muscleGroups}) = do
-    createdExercise <- create exercise
-    let exercisesMuscleGroups :: [ExercisesMuscleGroup] =
-          map
-            ( \(muscleGroup) ->
-                newRecord @ExercisesMuscleGroup
-                  |> set #exerciseId (get #id createdExercise)
-                  |> set #muscleGroupId (get #id muscleGroup)
-            )
-            muscleGroups
-    exerciseMuscleGroups <- createMany exercisesMuscleGroups
-    pure
-      ( ExerciseWithMuscleGroups
-          { muscleGroups = muscleGroups,
-            exercise = exercise
-          }
-      )
-  createMany :: (?modelContext :: ModelContext) => [ExerciseWithMuscleGroups] -> IO [ExerciseWithMuscleGroups]
-  createMany [] = pure []
-  createMany models = do
-    createdExercises <- createMany (map (.exercise) models)
-    let exercisesWithMuscleGroups = zip models createdExercises
-    let exercisesMuscleGroups =
-          concatMap
-            ( \(model, createdExercise) ->
-                map
-                  ( \(muscleGroup) ->
-                      newRecord @ExercisesMuscleGroup
-                        |> set #exerciseId (get #id createdExercise)
-                        |> set #muscleGroupId (get #id muscleGroup)
-                  )
-                  model.muscleGroups
-            )
-            exercisesWithMuscleGroups
-    _ <- createMany exercisesMuscleGroups
-    pure $
-      zipWith
-        ( \model createdExercise ->
-            ExerciseWithMuscleGroups
-              { exercise = createdExercise,
-                muscleGroups = model.muscleGroups
-              }
-        )
-        models
-        createdExercises
-
 -- | an `Exercise` with all associated MuscleGroups
 fetchExerciseWithMuscleGroups :: (?modelContext :: ModelContext) => Id Exercise -> IO ExerciseWithMuscleGroups
 fetchExerciseWithMuscleGroups exerciseId = do
