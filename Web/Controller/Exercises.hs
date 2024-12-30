@@ -51,12 +51,9 @@ instance Controller ExercisesController where
             setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
-    allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
-    let muscleGroups =
-          Data.List.filter
-            (\muscleGroup -> muscleGroup.id `elem` paramMuscleGroupIds)
-            allMuscleGroups
+    allMuscleGroups <- query @MuscleGroup |> fetch
+    let muscleGroups = selectedMuscleGroups allMuscleGroups paramMuscleGroupIds
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
@@ -69,7 +66,7 @@ instance Controller ExercisesController where
         Right validExercise -> do
           withTransaction do
             createdExercise <- createRecord validExercise
-            createExercisesMuscleGroupsAssocs createdExercise.id (paramList "muscleGroupIds")
+            createExercisesMuscleGroupsAssocs createdExercise.id paramMuscleGroupIds
 
             setSuccessMessage "Create exercise and muscle group associations"
     redirectTo ExercisesAction
@@ -99,3 +96,9 @@ createExercisesMuscleGroupsAssocs exerciseId muscleGroupIds = do
           |> createRecord
     )
     muscleGroupIds
+
+selectedMuscleGroups :: [MuscleGroup] -> [Id MuscleGroup] -> [MuscleGroup]
+selectedMuscleGroups allMuscleGroups muscleGroupIds =
+  Data.List.filter
+    (\muscleGroup -> muscleGroup.id `elem` muscleGroupIds)
+    allMuscleGroups
