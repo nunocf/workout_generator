@@ -17,7 +17,6 @@ instance Controller ExercisesController where
   action NewExerciseAction = do
     let exerciseWithMuscleGroups = newRecord @ExerciseWithMuscleGroups
     allMuscleGroups <- query @MuscleGroup |> fetch
-
     render NewView {..}
   action ShowExerciseAction {exerciseId} = do
     exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
@@ -27,21 +26,27 @@ instance Controller ExercisesController where
     allMuscleGroups <- query @MuscleGroup |> fetch
     render EditView {..}
   action UpdateExerciseAction {exerciseId} = do
-    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
-    allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
+    allMuscleGroups <- query @MuscleGroup |> fetch
+    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
+    let muscleGroups = selectedMuscleGroups allMuscleGroups paramMuscleGroupIds
     exerciseWithMuscleGroups.exercise
+      |> buildExercise
       |> ifValid \case
-        Left exercise ->
-          render EditView {..}
-        Right exercise -> do
+        Left invalidExercise ->
+          render
+            EditView
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups invalidExercise muscleGroups,
+                allMuscleGroups = allMuscleGroups
+              }
+        Right validExercise -> do
           withTransaction do
-            exercise <- updateRecord exercise
+            updateRecord validExercise
             query @ExercisesMuscleGroup
-              |> filterWhere (#exerciseId, exercise.id)
+              |> filterWhere (#exerciseId, exerciseId)
               |> fetch
               >>= deleteRecords
-            createExercisesMuscleGroupsAssocs exercise.id (paramList "muscleGroupIds")
+            createExercisesMuscleGroupsAssocs exerciseId (paramList "muscleGroupIds")
 
             setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
