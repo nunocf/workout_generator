@@ -1,0 +1,19 @@
+module Web.Controller.Sessions where
+
+import IHP.AuthSupport.Controller.Sessions qualified as Sessions
+import Web.Controller.Prelude
+import Web.View.Sessions.New
+
+instance Controller SessionsController where
+  action NewSessionAction = Sessions.newSessionAction @User
+  action CreateSessionAction = Sessions.createSessionAction @User
+  action DeleteSessionAction = Sessions.deleteSessionAction @User
+
+instance Sessions.SessionsControllerConfig User where
+  beforeLogin = updateLoginHistory
+
+updateLoginHistory user = do
+  user
+    |> modify #logins ((+) 1)
+    |> updateRecord
+  pure ()

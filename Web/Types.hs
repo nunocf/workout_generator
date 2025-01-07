@@ -1,6 +1,7 @@
 module Web.Types where
 
 import Generated.Types
+import IHP.LoginSupport.Types
 import IHP.ModelSupport
 import IHP.Prelude
 
@@ -28,9 +29,30 @@ data ExercisesController
   | DeleteExerciseAction {exerciseId :: !(Id Exercise)}
   deriving (Eq, Show, Data)
 
+data SessionsController
+  = NewSessionAction
+  | CreateSessionAction
+  | DeleteSessionAction
+  deriving (Eq, Show, Data)
+
 data ExerciseWithMuscleGroups
   = ExerciseWithMuscleGroups
   { exercise :: !Exercise,
     muscleGroups :: ![MuscleGroup]
   }
   deriving (Show)
+
+instance HasNewSessionUrl User where
+  newSessionUrl _ = "/NewSession"
+
+type instance CurrentUserRecord = User
+
+data UsersController
+    = UsersAction
+    | NewUserAction
+    | ShowUserAction { userId :: !(Id User) }
+    | CreateUserAction
+    | EditUserAction { userId :: !(Id User) }
+    | UpdateUserAction { userId :: !(Id User) }
+    | DeleteUserAction { userId :: !(Id User) }
+    deriving (Eq, Show, Data)
