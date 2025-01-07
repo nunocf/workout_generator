@@ -9,6 +9,7 @@ import Web.Controller.MuscleGroups
 import Web.Controller.Prelude
 import Web.Controller.Sessions
 import Web.Controller.Static
+import Web.Controller.Users
 import Web.View.Layout (defaultLayout)
 
 instance FrontController WebApplication where
@@ -16,6 +17,7 @@ instance FrontController WebApplication where
     [ startPage NewSessionAction,
       parseRoute @SessionsController,
       -- Generator Marker
+      parseRoute @UsersController,
       parseRoute @ExercisesController,
       parseRoute @MuscleGroupsController
     ]

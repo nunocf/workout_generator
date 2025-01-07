@@ -12,3 +12,6 @@ instance AutoRoute MuscleGroupsController
 instance AutoRoute ExercisesController
 
 instance AutoRoute SessionsController
+
+instance AutoRoute UsersController
+
