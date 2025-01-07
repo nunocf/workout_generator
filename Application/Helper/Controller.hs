@@ -1,9 +1,17 @@
 module Application.Helper.Controller where
 
+import Data.ByteString qualified as ByteString
 import Data.Map qualified as Map
+import Database.PostgreSQL.Simple.ToField
+import Database.PostgreSQL.Simple.Types (Query (Query))
 import Generated.Types
 import IHP.ControllerPrelude
+import IHP.ModelSupport
+import IHP.QueryBuilder
 import Web.Types
+
+instance Record ExerciseWithMuscleGroups where
+  newRecord = ExerciseWithMuscleGroups {exercise = newRecord, muscleGroups = []}
 
 -- | an `Exercise` with all associated MuscleGroups
 fetchExerciseWithMuscleGroups :: (?modelContext :: ModelContext) => Id Exercise -> IO ExerciseWithMuscleGroups

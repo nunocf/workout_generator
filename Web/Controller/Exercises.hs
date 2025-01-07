@@ -1,6 +1,7 @@
 module Web.Controller.Exercises where
 
 import Application.Helper.Controller qualified as ControllerHelper
+import Data.List qualified
 import Web.Controller.Prelude
 import Web.View.Exercises.Edit
 import Web.View.Exercises.Index
@@ -14,14 +15,8 @@ instance Controller ExercisesController where
 
       render IndexView {..}
   action NewExerciseAction = do
-    let exerciseWithMuscleGroups =
-          ExerciseWithMuscleGroups
-            { exercise = newRecord,
-              muscleGroups = []
-            }
-
+    let exerciseWithMuscleGroups = newRecord @ExerciseWithMuscleGroups
     allMuscleGroups <- query @MuscleGroup |> fetch
-
     render NewView {..}
   action ShowExerciseAction {exerciseId} = do
     exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
@@ -31,63 +26,79 @@ instance Controller ExercisesController where
     allMuscleGroups <- query @MuscleGroup |> fetch
     render EditView {..}
   action UpdateExerciseAction {exerciseId} = do
-    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
-    allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
+    allMuscleGroups <- query @MuscleGroup |> fetch
+    exerciseWithMuscleGroups <- ControllerHelper.fetchExerciseWithMuscleGroups exerciseId
+    let muscleGroups = selectedMuscleGroups allMuscleGroups paramMuscleGroupIds
     exerciseWithMuscleGroups.exercise
+      |> buildExercise
       |> ifValid \case
-        Left exercise -> render EditView {..}
-        Right exercise -> do
+        Left invalidExercise ->
+          render
+            EditView
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups invalidExercise muscleGroups,
+                allMuscleGroups = allMuscleGroups
+              }
+        Right validExercise -> do
           withTransaction do
-            exercise <- exercise |> updateRecord
-            exercisesMuscleGroups <-
-              query @ExercisesMuscleGroup
-                |> filterWhere (#exerciseId, exercise.id)
-                |> fetch
+            updateRecord validExercise
+            query @ExercisesMuscleGroup
+              |> filterWhere (#exerciseId, exerciseId)
+              |> fetch
+              >>= deleteRecords
+            createExercisesMuscleGroupsAssocs exerciseId (paramList "muscleGroupIds")
 
-            deleteRecords exercisesMuscleGroups
-
-            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
             setSuccessMessage "Exercise updated"
           redirectTo EditExerciseAction {..}
   action CreateExerciseAction = do
-    allMuscleGroups <- query @MuscleGroup |> fetch
     let paramMuscleGroupIds = paramList @(Id MuscleGroup) "muscleGroupIds"
+    allMuscleGroups <- query @MuscleGroup |> fetch
+    let muscleGroups = selectedMuscleGroups allMuscleGroups paramMuscleGroupIds
     newRecord @Exercise
       |> buildExercise
       |> ifValid \case
-        Left exercise ->
+        Left invalidExercise ->
           render
             NewView
-              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups {exercise, muscleGroups = []},
-                allMuscleGroups
+              { exerciseWithMuscleGroups = ExerciseWithMuscleGroups invalidExercise muscleGroups,
+                allMuscleGroups = allMuscleGroups
               }
-        Right exercise -> do
+        Right validExercise -> do
           withTransaction do
-            exercise <- createRecord exercise
-            exerciseMuscleGroups <- createExerciseMuscleGroups exercise paramMuscleGroupIds
-            setSuccessMessage "Exercise created"
+            createdExercise <- createRecord validExercise
+            createExercisesMuscleGroupsAssocs createdExercise.id paramMuscleGroupIds
 
-          redirectTo ExercisesAction
+            setSuccessMessage "Create exercise and muscle group associations"
+    redirectTo ExercisesAction
   action DeleteExerciseAction {exerciseId} = do
-    exercise <- fetch exerciseId
-    deleteRecord exercise
+    withTransaction do
+      deleteRecordById exerciseId
+      query @ExercisesMuscleGroup
+        |> findManyBy #exerciseId exerciseId
+        >>= deleteRecords
+
     setSuccessMessage "Exercise deleted"
     redirectTo ExercisesAction
 
 buildExercise exercise =
   exercise
     |> fill @'["name"]
-    |> validateField #name nonEmpty
+    |> validateField (#name) nonEmpty
 
-createExerciseMuscleGroups exercise muscleGroupIds = do
-  createMany exercisesMuscleGroupsToCreate
-  where
-    exercisesMuscleGroupsToCreate =
-      map
-        ( \muscleGroupId ->
-            newRecord @ExercisesMuscleGroup
-              |> set #exerciseId (get #id exercise)
-              |> set #muscleGroupId muscleGroupId
-        )
-        muscleGroupIds
+createExercisesMuscleGroupsAssocs ::
+  (?modelContext :: ModelContext) => Id Exercise -> [Id MuscleGroup] -> IO ()
+createExercisesMuscleGroupsAssocs exerciseId muscleGroupIds = do
+  mapM_
+    ( \muscleGroupId ->
+        newRecord @ExercisesMuscleGroup
+          |> set #exerciseId exerciseId
+          |> set #muscleGroupId muscleGroupId
+          |> createRecord
+    )
+    muscleGroupIds
+
+selectedMuscleGroups :: [MuscleGroup] -> [Id MuscleGroup] -> [MuscleGroup]
+selectedMuscleGroups allMuscleGroups muscleGroupIds =
+  Data.List.filter
+    (\muscleGroup -> muscleGroup.id `elem` muscleGroupIds)
+    allMuscleGroups
