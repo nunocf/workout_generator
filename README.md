@@ -72,7 +72,9 @@ For project-specific issues, please open an issue in this repository.
 
 ## TODO
 
-- [ ] Add migration to change relationship between exercises and muscle groups to be n:n
+- [x] Add migration to change relationship between exercises and muscle groups to be n:n
+- [ ] Create users
+- [ ] create concept of a workout
 - [ ] Generate a workout based on muscle groups.
 - [ ] Generate training based on duration.
 - [ ] Generate training by objective.

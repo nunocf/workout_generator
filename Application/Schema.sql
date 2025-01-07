@@ -28,5 +28,12 @@ CREATE TABLE exercises_muscle_groups (
 );
 CREATE INDEX exercises_muscle_groups_exercise_id_index ON exercises_muscle_groups (exercise_id);
 CREATE INDEX exercises_muscle_groups_muscle_group_id_index ON exercises_muscle_groups (muscle_group_id);
+CREATE TABLE users (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    locked_at TIMESTAMP WITH TIME ZONE,
+    failed_login_attempts INT DEFAULT 0 NOT NULL
+);
 ALTER TABLE exercises_muscle_groups ADD CONSTRAINT exercises_muscle_groups_ref_exercise_id FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE NO ACTION;
 ALTER TABLE exercises_muscle_groups ADD CONSTRAINT exercises_muscle_groups_ref_muscle_group_id FOREIGN KEY (muscle_group_id) REFERENCES muscle_groups (id) ON DELETE NO ACTION;
