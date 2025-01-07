@@ -33,7 +33,8 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     locked_at TIMESTAMP WITH TIME ZONE,
-    failed_login_attempts INT DEFAULT 0 NOT NULL
+    failed_login_attempts INT DEFAULT 0 NOT NULL,
+    logins INT DEFAULT 0 NOT NULL
 );
 ALTER TABLE exercises_muscle_groups ADD CONSTRAINT exercises_muscle_groups_ref_exercise_id FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE NO ACTION;
 ALTER TABLE exercises_muscle_groups ADD CONSTRAINT exercises_muscle_groups_ref_muscle_group_id FOREIGN KEY (muscle_group_id) REFERENCES muscle_groups (id) ON DELETE NO ACTION;

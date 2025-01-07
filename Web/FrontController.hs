@@ -13,7 +13,7 @@ import Web.View.Layout (defaultLayout)
 
 instance FrontController WebApplication where
   controllers =
-    [ startPage ExercisesAction,
+    [ startPage NewSessionAction,
       parseRoute @SessionsController,
       -- Generator Marker
       parseRoute @ExercisesController,
